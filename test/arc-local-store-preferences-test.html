@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+  <title>arc-local-store-preferences test</title>
+  <script src="../../webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+  <link rel="import" href="../arc-local-store-preferences.html">
+</head>
+<body>
+  <test-fixture id="Basic">
+    <template>
+      <arc-local-store-preferences></arc-local-store-preferences>
+    </template>
+  </test-fixture>
+
+  <script>
+  suite('arc-local-store-preferences', () => {
+    suite('Storing data', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      teardown(() => {
+        element.clear();
+      });
+
+      test('store() returns promise', () => {
+        const result = element.store('a', 'b');
+        assert.typeOf(result.then, 'function');
+        return result;
+      });
+
+      test('Stores data in the store', () => {
+        return element.store('key', true)
+        .then(() => {
+          const stored = localStorage['_arc_.key'];
+          assert.equal(stored, '{"value":true}');
+        });
+      });
+
+      test('Dispatches settings-changed event', (done) => {
+        const key = 'test-key';
+        const value = 123;
+        element.addEventListener('settings-changed', function f(e) {
+          element.removeEventListener('settings-changed', f);
+          assert.isFalse(e.cancelable);
+          assert.equal(e.detail.name, key);
+          assert.equal(e.detail.value, value);
+          done();
+        });
+        element.store(key, value);
+      });
+
+      test('Stores data via event', () => {
+        const name = 'test-key-event';
+        const value = 'abc';
+
+        const e = new CustomEvent('settings-changed', {
+          detail: {
+            name,
+            value
+          },
+          bubbles: true,
+          composed: true,
+          cancelable: true
+        });
+        this.dispatchEvent(e);
+
+        return e.detail.result
+        .then(() => {
+          const stored = localStorage['_arc_.' + name];
+          assert.equal(stored, '{"value":"abc"}');
+        });
+      });
+    });
+
+    suite('Reading data', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+        localStorage['_arc_.a'] = JSON.stringify({value: 'a'});
+        localStorage['_arc_.b'] = JSON.stringify({value: true});
+        localStorage['_arc_.c'] = JSON.stringify({value: 12});
+        localStorage['_arc_.d'] = JSON.stringify({value: null});
+      });
+
+      teardown(() => {
+        element.clear();
+      });
+
+      test('load() returns a promise', () => {
+        const result = element.load();
+        assert.typeOf(result.then, 'function');
+        return result.then(() => {});
+      });
+
+      test('Promise resolves to an object with all stored data', () => {
+        return element.load()
+        .then((data) => {
+          assert.isDefined(data.a);
+          assert.isDefined(data.b);
+          assert.isDefined(data.c);
+          assert.isDefined(data.d);
+        });
+      });
+
+      test('Returns string value', () => {
+        return element.load()
+        .then((data) => {
+          assert.strictEqual(data.a, 'a');
+        });
+      });
+
+      test('Returns boolean value', () => {
+        return element.load()
+        .then((data) => {
+          assert.strictEqual(data.b, true);
+        });
+      });
+
+      test('Returns number value', () => {
+        return element.load()
+        .then((data) => {
+          assert.strictEqual(data.c, 12);
+        });
+      });
+
+      test('Returns null value', () => {
+        return element.load()
+        .then((data) => {
+          assert.strictEqual(data.d, null);
+        });
+      });
+
+      test('Returns scoped data', () => {
+        return element.load(['a', 'c'])
+        .then((data) => {
+          assert.isDefined(data.a);
+          assert.isUndefined(data.b);
+          assert.isDefined(data.c);
+          assert.isUndefined(data.d);
+        });
+      });
+
+      test('Reads data via event', () => {
+        const e = new CustomEvent('settings-read', {
+          detail: {},
+          bubbles: true,
+          composed: true,
+          cancelable: true
+        });
+        this.dispatchEvent(e);
+        return e.detail.result.then((data) => {
+          assert.strictEqual(data.a, 'a');
+          assert.strictEqual(data.b, true);
+          assert.strictEqual(data.c, 12);
+          assert.strictEqual(data.d, null);
+        });
+      });
+
+      test('Reads scoped data via event', () => {
+        const e = new CustomEvent('settings-read', {
+          detail: {
+            settings: ['c', 'd']
+          },
+          bubbles: true,
+          composed: true,
+          cancelable: true
+        });
+        this.dispatchEvent(e);
+        return e.detail.result.then((data) => {
+          assert.isUndefined(data.a);
+          assert.isUndefined(data.b);
+          assert.strictEqual(data.c, 12);
+          assert.strictEqual(data.d, null);
+        });
+      });
+    });
+  });
+  </script>
+</body>
+</html>
