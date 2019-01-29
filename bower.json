@@ -1,7 +1,7 @@
 {
   "name": "arc-local-store-preferences",
   "description": "An element that works with local storage preferences for ARC",
-  "version": "2.0.0-preview",
+  "version": "2.0.0",
   "license": "Apache-2.0",
   "main": "arc-local-store-preferences.html",
   "keywords": [
