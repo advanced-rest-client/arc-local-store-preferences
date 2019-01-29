@@ -67,7 +67,7 @@
           composed: true,
           cancelable: true
         });
-        this.dispatchEvent(e);
+        document.body.dispatchEvent(e);
 
         return e.detail.result
         .then(() => {
@@ -152,7 +152,7 @@
           composed: true,
           cancelable: true
         });
-        this.dispatchEvent(e);
+        document.body.dispatchEvent(e);
         return e.detail.result.then((data) => {
           assert.strictEqual(data.a, 'a');
           assert.strictEqual(data.b, true);
@@ -170,13 +170,112 @@
           composed: true,
           cancelable: true
         });
-        this.dispatchEvent(e);
+        document.body.dispatchEvent(e);
         return e.detail.result.then((data) => {
           assert.isUndefined(data.a);
           assert.isUndefined(data.b);
           assert.strictEqual(data.c, 12);
           assert.strictEqual(data.d, null);
         });
+      });
+
+      test('Ignores cancelled events', () => {
+        const e = new CustomEvent('settings-read', {
+          detail: {},
+          bubbles: true,
+          composed: true,
+          cancelable: true
+        });
+        document.body.addEventListener('settings-read', function f(e) {
+          document.body.removeEventListener('settings-read', f);
+          e.preventDefault();
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
+      });
+    });
+
+    suite('_winSettingsHandler()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+        localStorage['_arc_.a'] = JSON.stringify({value: 'a'});
+        localStorage['_arc_.b'] = JSON.stringify({value: true});
+        localStorage['_arc_.c'] = JSON.stringify({value: 12});
+        localStorage['_arc_.d'] = JSON.stringify({value: null});
+      });
+
+      teardown(() => {
+        element.clear();
+      });
+
+      test('Does nothing when storageArea is not "local"', () => {
+        const spy = sinon.spy(element, '_informChanged');
+        element._winSettingsHandler({
+          storageArea: 'session'
+        });
+        assert.isFalse(spy.called);
+      });
+
+      test('Calls _informChanged with arguments', () => {
+        const spy = sinon.spy(element, '_informChanged');
+        element._winSettingsHandler({
+          storageArea: 'local',
+          key: 'test-key',
+          newValue: 'test-value'
+        });
+        assert.isTrue(spy.called);
+        assert.equal(spy.args[0][0], 'test-key');
+        assert.equal(spy.args[0][1], 'test-value');
+      });
+    });
+
+    suite('_wrap()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Returns undefined for undefined argument', () => {
+        const result = element._wrap();
+        assert.isUndefined(result);
+      });
+
+      test('Returns null for null argument', () => {
+        const result = element._wrap(null);
+        assert.equal(result, null);
+      });
+
+      test('Returns json string', () => {
+        const result = element._wrap({test: true});
+        assert.equal(result, '{"value":{"test":true}}');
+      });
+    });
+
+    suite('_unwrap()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Returns undefined for undefined argument', () => {
+        const result = element._unwrap();
+        assert.isUndefined(result);
+      });
+
+      test('Returns null for null argument', () => {
+        const result = element._unwrap(null);
+        assert.equal(result, null);
+      });
+
+      test('Returns object from "value"', () => {
+        const result = element._unwrap('{"value":{"test":true}}');
+        assert.deepEqual(result, {test: true});
+      });
+
+      test('Returns undefined for invalid json', () => {
+        const result = element._unwrap('{"value"');
+        assert.isUndefined(result);
       });
     });
   });
