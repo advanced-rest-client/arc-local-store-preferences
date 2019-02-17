@@ -12,3 +12,12 @@
 
 
 
+# [3.0.0-preview.1](https://github.com/advanced-rest-client/arc-local-store-preferences/compare/2.0.0...3.0.0-preview.1) (2019-02-17)
+
+
+### Breaking
+
+* Updating component to Polymer 3 ([f34c6e030cd4a1036a95fc0fc5af11d31a862d93](https://github.com/advanced-rest-client/arc-local-store-preferences/commit/f34c6e030cd4a1036a95fc0fc5af11d31a862d93))
+
+
+
