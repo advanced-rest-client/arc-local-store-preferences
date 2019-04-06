@@ -65,7 +65,6 @@ import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
  * @memberof LogicElements
  */
 class ArcLocalStorePreferences extends PolymerElement {
-  static get is() {return 'arc-local-store-preferences';}
   static get properties() {
     return {
       /**
@@ -241,4 +240,4 @@ class ArcLocalStorePreferences extends PolymerElement {
     this.dispatchEvent(e);
   }
 }
-window.customElements.define(ArcLocalStorePreferences.is, ArcLocalStorePreferences);
+window.customElements.define('arc-local-store-preferences', ArcLocalStorePreferences);

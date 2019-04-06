@@ -9,7 +9,6 @@ import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
  * @memberof LogicElements
  */
 class ArcLocalStoreWorkspace extends PolymerElement {
-  static get is() {return 'arc-local-store-workspace';}
   static get properties() {
     return {
       /**
@@ -162,4 +161,4 @@ class ArcLocalStoreWorkspace extends PolymerElement {
     } catch (_) {}
   }
 }
-window.customElements.define(ArcLocalStoreWorkspace.is, ArcLocalStoreWorkspace);
+window.customElements.define('arc-local-store-workspace', ArcLocalStoreWorkspace);

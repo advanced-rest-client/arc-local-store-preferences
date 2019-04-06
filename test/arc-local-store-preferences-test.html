@@ -4,12 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
   <title>arc-local-store-preferences test</title>
-  <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
-  <script src="../node_modules/@polymer/test-fixture/test-fixture.js"></script>
-  <script src="../node_modules/mocha/mocha.js"></script>
-  <script src="../node_modules/chai/chai.js"></script>
-  <script src="../node_modules/wct-mocha/wct-mocha.js"></script>
-  <script src="../node_modules/sinon/pkg/sinon.js"></script>
+
+  <script src="../../../@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../@polymer/test-fixture/test-fixture.js"></script>
+  <script src="../../../mocha/mocha.js"></script>
+  <script src="../../../chai/chai.js"></script>
+  <script src="../../../wct-mocha/wct-mocha.js"></script>
+  <script src="../../../sinon/pkg/sinon.js"></script>
+
   <script type="module" src="../arc-local-store-preferences.js"></script>
 </head>
 <body>
@@ -20,269 +22,269 @@
   </test-fixture>
 
   <script type="module">
-suite('arc-local-store-preferences', () => {
-  suite('Storing data', () => {
-    let element;
-    setup(() => {
-      element = fixture('Basic');
-    });
+  suite('arc-local-store-preferences', () => {
+    suite('Storing data', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
 
-    teardown(() => {
-      element.clear();
-    });
+      teardown(() => {
+        element.clear();
+      });
 
-    test('store() returns promise', () => {
-      const result = element.store('a', 'b');
-      assert.typeOf(result.then, 'function');
-      return result;
-    });
+      test('store() returns promise', () => {
+        const result = element.store('a', 'b');
+        assert.typeOf(result.then, 'function');
+        return result;
+      });
 
-    test('Stores data in the store', () => {
-      return element.store('key', true)
-      .then(() => {
-        const stored = localStorage['_arc_.key'];
-        assert.equal(stored, '{"value":true}');
+      test('Stores data in the store', () => {
+        return element.store('key', true)
+        .then(() => {
+          const stored = localStorage['_arc_.key'];
+          assert.equal(stored, '{"value":true}');
+        });
+      });
+
+      test('Dispatches settings-changed event', (done) => {
+        const key = 'test-key';
+        const value = 123;
+        element.addEventListener('settings-changed', function f(e) {
+          element.removeEventListener('settings-changed', f);
+          assert.isFalse(e.cancelable);
+          assert.equal(e.detail.name, key);
+          assert.equal(e.detail.value, value);
+          done();
+        });
+        element.store(key, value);
+      });
+
+      test('Stores data via event', () => {
+        const name = 'test-key-event';
+        const value = 'abc';
+
+        const e = new CustomEvent('settings-changed', {
+          detail: {
+            name,
+            value
+          },
+          bubbles: true,
+          composed: true,
+          cancelable: true
+        });
+        document.body.dispatchEvent(e);
+
+        return e.detail.result
+        .then(() => {
+          const stored = localStorage['_arc_.' + name];
+          assert.equal(stored, '{"value":"abc"}');
+        });
       });
     });
 
-    test('Dispatches settings-changed event', (done) => {
-      const key = 'test-key';
-      const value = 123;
-      element.addEventListener('settings-changed', function f(e) {
-        element.removeEventListener('settings-changed', f);
-        assert.isFalse(e.cancelable);
-        assert.equal(e.detail.name, key);
-        assert.equal(e.detail.value, value);
-        done();
+    suite('Reading data', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+        localStorage['_arc_.a'] = JSON.stringify({value: 'a'});
+        localStorage['_arc_.b'] = JSON.stringify({value: true});
+        localStorage['_arc_.c'] = JSON.stringify({value: 12});
+        localStorage['_arc_.d'] = JSON.stringify({value: null});
       });
-      element.store(key, value);
+
+      teardown(() => {
+        element.clear();
+      });
+
+      test('load() returns a promise', () => {
+        const result = element.load();
+        assert.typeOf(result.then, 'function');
+        return result.then(() => {});
+      });
+
+      test('Promise resolves to an object with all stored data', () => {
+        return element.load()
+        .then((data) => {
+          assert.isDefined(data.a);
+          assert.isDefined(data.b);
+          assert.isDefined(data.c);
+          assert.isDefined(data.d);
+        });
+      });
+
+      test('Returns string value', () => {
+        return element.load()
+        .then((data) => {
+          assert.strictEqual(data.a, 'a');
+        });
+      });
+
+      test('Returns boolean value', () => {
+        return element.load()
+        .then((data) => {
+          assert.strictEqual(data.b, true);
+        });
+      });
+
+      test('Returns number value', () => {
+        return element.load()
+        .then((data) => {
+          assert.strictEqual(data.c, 12);
+        });
+      });
+
+      test('Returns null value', () => {
+        return element.load()
+        .then((data) => {
+          assert.strictEqual(data.d, null);
+        });
+      });
+
+      test('Returns scoped data', () => {
+        return element.load(['a', 'c'])
+        .then((data) => {
+          assert.isDefined(data.a);
+          assert.isUndefined(data.b);
+          assert.isDefined(data.c);
+          assert.isUndefined(data.d);
+        });
+      });
+
+      test('Reads data via event', () => {
+        const e = new CustomEvent('settings-read', {
+          detail: {},
+          bubbles: true,
+          composed: true,
+          cancelable: true
+        });
+        document.body.dispatchEvent(e);
+        return e.detail.result.then((data) => {
+          assert.strictEqual(data.a, 'a');
+          assert.strictEqual(data.b, true);
+          assert.strictEqual(data.c, 12);
+          assert.strictEqual(data.d, null);
+        });
+      });
+
+      test('Reads scoped data via event', () => {
+        const e = new CustomEvent('settings-read', {
+          detail: {
+            settings: ['c', 'd']
+          },
+          bubbles: true,
+          composed: true,
+          cancelable: true
+        });
+        document.body.dispatchEvent(e);
+        return e.detail.result.then((data) => {
+          assert.isUndefined(data.a);
+          assert.isUndefined(data.b);
+          assert.strictEqual(data.c, 12);
+          assert.strictEqual(data.d, null);
+        });
+      });
+
+      test('Ignores cancelled events', () => {
+        const e = new CustomEvent('settings-read', {
+          detail: {},
+          bubbles: true,
+          composed: true,
+          cancelable: true
+        });
+        document.body.addEventListener('settings-read', function f(e) {
+          document.body.removeEventListener('settings-read', f);
+          e.preventDefault();
+        });
+        document.body.dispatchEvent(e);
+        assert.isUndefined(e.detail.result);
+      });
     });
 
-    test('Stores data via event', () => {
-      const name = 'test-key-event';
-      const value = 'abc';
-
-      const e = new CustomEvent('settings-changed', {
-        detail: {
-          name,
-          value
-        },
-        bubbles: true,
-        composed: true,
-        cancelable: true
+    suite('_winSettingsHandler()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+        localStorage['_arc_.a'] = JSON.stringify({value: 'a'});
+        localStorage['_arc_.b'] = JSON.stringify({value: true});
+        localStorage['_arc_.c'] = JSON.stringify({value: 12});
+        localStorage['_arc_.d'] = JSON.stringify({value: null});
       });
-      document.body.dispatchEvent(e);
 
-      return e.detail.result
-      .then(() => {
-        const stored = localStorage['_arc_.' + name];
-        assert.equal(stored, '{"value":"abc"}');
+      teardown(() => {
+        element.clear();
+      });
+
+      test('Does nothing when storageArea is not "local"', () => {
+        const spy = sinon.spy(element, '_informChanged');
+        element._winSettingsHandler({
+          storageArea: 'session'
+        });
+        assert.isFalse(spy.called);
+      });
+
+      test('Calls _informChanged with arguments', () => {
+        const spy = sinon.spy(element, '_informChanged');
+        element._winSettingsHandler({
+          storageArea: 'local',
+          key: 'test-key',
+          newValue: 'test-value'
+        });
+        assert.isTrue(spy.called);
+        assert.equal(spy.args[0][0], 'test-key');
+        assert.equal(spy.args[0][1], 'test-value');
+      });
+    });
+
+    suite('_wrap()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Returns undefined for undefined argument', () => {
+        const result = element._wrap();
+        assert.isUndefined(result);
+      });
+
+      test('Returns null for null argument', () => {
+        const result = element._wrap(null);
+        assert.equal(result, null);
+      });
+
+      test('Returns json string', () => {
+        const result = element._wrap({test: true});
+        assert.equal(result, '{"value":{"test":true}}');
+      });
+    });
+
+    suite('_unwrap()', () => {
+      let element;
+      setup(() => {
+        element = fixture('Basic');
+      });
+
+      test('Returns undefined for undefined argument', () => {
+        const result = element._unwrap();
+        assert.isUndefined(result);
+      });
+
+      test('Returns null for null argument', () => {
+        const result = element._unwrap(null);
+        assert.equal(result, null);
+      });
+
+      test('Returns object from "value"', () => {
+        const result = element._unwrap('{"value":{"test":true}}');
+        assert.deepEqual(result, {test: true});
+      });
+
+      test('Returns undefined for invalid json', () => {
+        const result = element._unwrap('{"value"');
+        assert.isUndefined(result);
       });
     });
   });
-
-  suite('Reading data', () => {
-    let element;
-    setup(() => {
-      element = fixture('Basic');
-      localStorage['_arc_.a'] = JSON.stringify({value: 'a'});
-      localStorage['_arc_.b'] = JSON.stringify({value: true});
-      localStorage['_arc_.c'] = JSON.stringify({value: 12});
-      localStorage['_arc_.d'] = JSON.stringify({value: null});
-    });
-
-    teardown(() => {
-      element.clear();
-    });
-
-    test('load() returns a promise', () => {
-      const result = element.load();
-      assert.typeOf(result.then, 'function');
-      return result.then(() => {});
-    });
-
-    test('Promise resolves to an object with all stored data', () => {
-      return element.load()
-      .then((data) => {
-        assert.isDefined(data.a);
-        assert.isDefined(data.b);
-        assert.isDefined(data.c);
-        assert.isDefined(data.d);
-      });
-    });
-
-    test('Returns string value', () => {
-      return element.load()
-      .then((data) => {
-        assert.strictEqual(data.a, 'a');
-      });
-    });
-
-    test('Returns boolean value', () => {
-      return element.load()
-      .then((data) => {
-        assert.strictEqual(data.b, true);
-      });
-    });
-
-    test('Returns number value', () => {
-      return element.load()
-      .then((data) => {
-        assert.strictEqual(data.c, 12);
-      });
-    });
-
-    test('Returns null value', () => {
-      return element.load()
-      .then((data) => {
-        assert.strictEqual(data.d, null);
-      });
-    });
-
-    test('Returns scoped data', () => {
-      return element.load(['a', 'c'])
-      .then((data) => {
-        assert.isDefined(data.a);
-        assert.isUndefined(data.b);
-        assert.isDefined(data.c);
-        assert.isUndefined(data.d);
-      });
-    });
-
-    test('Reads data via event', () => {
-      const e = new CustomEvent('settings-read', {
-        detail: {},
-        bubbles: true,
-        composed: true,
-        cancelable: true
-      });
-      document.body.dispatchEvent(e);
-      return e.detail.result.then((data) => {
-        assert.strictEqual(data.a, 'a');
-        assert.strictEqual(data.b, true);
-        assert.strictEqual(data.c, 12);
-        assert.strictEqual(data.d, null);
-      });
-    });
-
-    test('Reads scoped data via event', () => {
-      const e = new CustomEvent('settings-read', {
-        detail: {
-          settings: ['c', 'd']
-        },
-        bubbles: true,
-        composed: true,
-        cancelable: true
-      });
-      document.body.dispatchEvent(e);
-      return e.detail.result.then((data) => {
-        assert.isUndefined(data.a);
-        assert.isUndefined(data.b);
-        assert.strictEqual(data.c, 12);
-        assert.strictEqual(data.d, null);
-      });
-    });
-
-    test('Ignores cancelled events', () => {
-      const e = new CustomEvent('settings-read', {
-        detail: {},
-        bubbles: true,
-        composed: true,
-        cancelable: true
-      });
-      document.body.addEventListener('settings-read', function f(e) {
-        document.body.removeEventListener('settings-read', f);
-        e.preventDefault();
-      });
-      document.body.dispatchEvent(e);
-      assert.isUndefined(e.detail.result);
-    });
-  });
-
-  suite('_winSettingsHandler()', () => {
-    let element;
-    setup(() => {
-      element = fixture('Basic');
-      localStorage['_arc_.a'] = JSON.stringify({value: 'a'});
-      localStorage['_arc_.b'] = JSON.stringify({value: true});
-      localStorage['_arc_.c'] = JSON.stringify({value: 12});
-      localStorage['_arc_.d'] = JSON.stringify({value: null});
-    });
-
-    teardown(() => {
-      element.clear();
-    });
-
-    test('Does nothing when storageArea is not "local"', () => {
-      const spy = sinon.spy(element, '_informChanged');
-      element._winSettingsHandler({
-        storageArea: 'session'
-      });
-      assert.isFalse(spy.called);
-    });
-
-    test('Calls _informChanged with arguments', () => {
-      const spy = sinon.spy(element, '_informChanged');
-      element._winSettingsHandler({
-        storageArea: 'local',
-        key: 'test-key',
-        newValue: 'test-value'
-      });
-      assert.isTrue(spy.called);
-      assert.equal(spy.args[0][0], 'test-key');
-      assert.equal(spy.args[0][1], 'test-value');
-    });
-  });
-
-  suite('_wrap()', () => {
-    let element;
-    setup(() => {
-      element = fixture('Basic');
-    });
-
-    test('Returns undefined for undefined argument', () => {
-      const result = element._wrap();
-      assert.isUndefined(result);
-    });
-
-    test('Returns null for null argument', () => {
-      const result = element._wrap(null);
-      assert.equal(result, null);
-    });
-
-    test('Returns json string', () => {
-      const result = element._wrap({test: true});
-      assert.equal(result, '{"value":{"test":true}}');
-    });
-  });
-
-  suite('_unwrap()', () => {
-    let element;
-    setup(() => {
-      element = fixture('Basic');
-    });
-
-    test('Returns undefined for undefined argument', () => {
-      const result = element._unwrap();
-      assert.isUndefined(result);
-    });
-
-    test('Returns null for null argument', () => {
-      const result = element._unwrap(null);
-      assert.equal(result, null);
-    });
-
-    test('Returns object from "value"', () => {
-      const result = element._unwrap('{"value":{"test":true}}');
-      assert.deepEqual(result, {test: true});
-    });
-
-    test('Returns undefined for invalid json', () => {
-      const result = element._unwrap('{"value"');
-      assert.isUndefined(result);
-    });
-  });
-});
-</script>
+  </script>
 </body>
 </html>
