@@ -8,7 +8,7 @@
     "url": "git://github.com/advanced-rest-client/arc-local-store-preferences.git"
   },
   "name": "@advanced-rest-client/arc-local-store-preferences",
-  "version": "3.0.0-preview.1",
+  "version": "3.0.0-preview.2",
   "license": "Apache-2.0",
   "main": "arc-local-store-preferences.js",
   "authors": [
