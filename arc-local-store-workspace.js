@@ -1,4 +1,4 @@
-import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
+import { LitElement } from 'lit-element';
 /**
  * `arc-local-store-workspace`
  *
@@ -8,32 +8,34 @@ import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
  * @polymer
  * @memberof LogicElements
  */
-class ArcLocalStoreWorkspace extends PolymerElement {
+class ArcLocalStoreWorkspace extends LitElement {
   static get properties() {
     return {
       /**
        * Storage preference key prefix
        */
-      prefix: {
-        type: String,
-        value: '_arcworkspace'
-      }
+      dataPrefix: { type: String }
     };
   }
   constructor() {
     super();
+    this.dataPrefix = '_arcworkspace';
     this._readHandler = this._readHandler.bind(this);
     this._changeHandler = this._changeHandler.bind(this);
   }
 
   connectedCallback() {
-    super.connectedCallback();
+    if (super.connectedCallback) {
+      super.connectedCallback();
+    }
     window.addEventListener('workspace-state-read', this._readHandler);
     window.addEventListener('workspace-state-store', this._changeHandler);
   }
 
   disconnectedCallback() {
-    super.disconnectedCallback();
+    if (super.disconnectedCallback) {
+      super.disconnectedCallback();
+    }
     window.removeEventListener('workspace-state-read', this._readHandler);
     window.removeEventListener('workspace-state-store', this._changeHandler);
   }
@@ -73,7 +75,7 @@ class ArcLocalStoreWorkspace extends PolymerElement {
    * Loads all stored workspace data
    * @return {Promise} A promise resolved to the worspace data object
    */
-  load() {
+  async load() {
     const result = {};
     const prefix = (this.dataPrefix || '') + '.';
     const pLen = prefix.length;
@@ -85,7 +87,7 @@ class ArcLocalStoreWorkspace extends PolymerElement {
         result[settingKey] = value;
       }
     }
-    return Promise.resolve(result);
+    return result;
   }
   /**
    * Stores value in local store using `prefix` to construct the key.
@@ -116,7 +118,7 @@ class ArcLocalStoreWorkspace extends PolymerElement {
       try {
         localStorage.setItem(sKey, this._wrap(value));
       } catch (e) {
-        console.warn(e);
+        // ..
       }
     });
   }
@@ -158,7 +160,9 @@ class ArcLocalStoreWorkspace extends PolymerElement {
     try {
       value = JSON.parse(value);
       return value.value;
-    } catch (_) {}
+    } catch (_) {
+      // ..
+    }
   }
 }
 window.customElements.define('arc-local-store-workspace', ArcLocalStoreWorkspace);

@@ -1,4 +1,4 @@
-import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
+import { LitElement } from 'lit-element';
 /**
  * `arc-local-store-preferences`
  *
@@ -61,37 +61,40 @@ import {PolymerElement} from '../../@polymer/polymer/polymer-element.js';
  * ```
  *
  * @customElement
- * @polymer
  * @memberof LogicElements
  */
-class ArcLocalStorePreferences extends PolymerElement {
+class ArcLocalStorePreferences extends LitElement {
   static get properties() {
     return {
       /**
        * Storage preference key prefix
        */
-      dataPrefix: {
-        type: String,
-        value: '_arc_'
-      }
+      dataPrefix: { type: String }
     };
   }
+
   constructor() {
     super();
+    this.dataPrefix = '_arc_';
     this._readHandler = this._readHandler.bind(this);
     this._changeHandler = this._changeHandler.bind(this);
     this._winSettingsHandler = this._winSettingsHandler.bind(this);
   }
 
   connectedCallback() {
-    super.connectedCallback();
+    if (super.connectedCallback) {
+      super.connectedCallback();
+    }
     window.addEventListener('settings-read', this._readHandler);
     window.addEventListener('settings-changed', this._changeHandler);
     window.addEventListener('storage', this._winSettingsHandler);
+    this.setAttribute('aria-hidden', 'true');
   }
 
   disconnectedCallback() {
-    super.disconnectedCallback();
+    if (super.disconnectedCallback) {
+      super.disconnectedCallback();
+    }
     window.removeEventListener('settings-read', this._readHandler);
     window.removeEventListener('settings-changed', this._changeHandler);
     window.removeEventListener('storage', this._winSettingsHandler);
@@ -134,7 +137,7 @@ class ArcLocalStorePreferences extends PolymerElement {
    * @param {?Array<String>} scope Optional list of key names to return.
    * @return {Promise} A promise resolved to the settings object
    */
-  load(scope) {
+  async load(scope) {
     const result = {};
     const prefix = (this.dataPrefix || '') + '.';
     const pLen = prefix.length;
@@ -149,7 +152,7 @@ class ArcLocalStorePreferences extends PolymerElement {
         result[settingKey] = value;
       }
     }
-    return Promise.resolve(result);
+    return result;
   }
   /**
    * Stores value in local store using `dataPrefix` to construct the key.
@@ -157,22 +160,17 @@ class ArcLocalStorePreferences extends PolymerElement {
    * @param {any} value A value to store
    * @return {Promise}
    */
-  store(key, value) {
+  async store(key, value) {
     const prefix = this.dataPrefix || '';
     const sKey = `${prefix}.${key}`;
-    try {
-      localStorage.setItem(sKey, this._wrap(value));
-    } catch (e) {
-      return Promise.reject(e);
-    }
+    localStorage.setItem(sKey, this._wrap(value));
     this._informChanged(key, value);
-    return Promise.resolve();
   }
   /**
    * Removes all stored preferences.
    * If `dataPrefix` is not set then it removes all items.
    */
-  clear() {
+  async clear() {
     const prefix = this.dataPrefix || '';
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
@@ -207,7 +205,9 @@ class ArcLocalStorePreferences extends PolymerElement {
     try {
       value = JSON.parse(value);
       return value.value;
-    } catch (_) {}
+    } catch (_) {
+      // ..
+    }
   }
   /**
    * Handler for the `storage` event. Dispateched when other window updated
