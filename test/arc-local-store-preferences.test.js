@@ -1,10 +1,13 @@
 import { fixture, assert } from '@open-wc/testing';
-import * as sinon from 'sinon/pkg/sinon-esm.js';
+import * as sinon from 'sinon';
 import '../arc-local-store-preferences.js';
+import { wrap, unwrap } from '../src/ArcLocalStorePreferences.js';
 
-describe('<arc-local-store-preferences>', function() {
+describe('<arc-local-store-preferences>', () => {
   async function basicFixture() {
-    return (await fixture(`<arc-local-store-preferences></arc-local-store-preferences>`));
+    return fixture(
+      `<arc-local-store-preferences></arc-local-store-preferences>`
+    );
   }
 
   describe('arc-local-store-preferences', () => {
@@ -44,16 +47,16 @@ describe('<arc-local-store-preferences>', function() {
         const e = new CustomEvent('settings-changed', {
           detail: {
             name,
-            value
+            value,
           },
           bubbles: true,
           composed: true,
-          cancelable: true
+          cancelable: true,
         });
         document.body.dispatchEvent(e);
 
         await e.detail.result;
-        const stored = localStorage['_arc_.' + name];
+        const stored = localStorage[`_arc_.${name}`];
         assert.equal(stored, '{"value":"abc"}');
       });
     });
@@ -73,8 +76,7 @@ describe('<arc-local-store-preferences>', function() {
       });
 
       it('Promise resolves to an object with all stored data', () => {
-        return element.load()
-        .then((data) => {
+        return element.load().then((data) => {
           assert.isDefined(data.a);
           assert.isDefined(data.b);
           assert.isDefined(data.c);
@@ -83,36 +85,31 @@ describe('<arc-local-store-preferences>', function() {
       });
 
       it('Returns string value', () => {
-        return element.load()
-        .then((data) => {
+        return element.load().then((data) => {
           assert.strictEqual(data.a, 'a');
         });
       });
 
       it('Returns boolean value', () => {
-        return element.load()
-        .then((data) => {
+        return element.load().then((data) => {
           assert.strictEqual(data.b, true);
         });
       });
 
       it('Returns number value', () => {
-        return element.load()
-        .then((data) => {
+        return element.load().then((data) => {
           assert.strictEqual(data.c, 12);
         });
       });
 
       it('Returns null value', () => {
-        return element.load()
-        .then((data) => {
+        return element.load().then((data) => {
           assert.strictEqual(data.d, null);
         });
       });
 
       it('Returns scoped data', () => {
-        return element.load(['a', 'c'])
-        .then((data) => {
+        return element.load(['a', 'c']).then((data) => {
           assert.isDefined(data.a);
           assert.isUndefined(data.b);
           assert.isDefined(data.c);
@@ -125,7 +122,7 @@ describe('<arc-local-store-preferences>', function() {
           detail: {},
           bubbles: true,
           composed: true,
-          cancelable: true
+          cancelable: true,
         });
         document.body.dispatchEvent(e);
         return e.detail.result.then((data) => {
@@ -139,11 +136,11 @@ describe('<arc-local-store-preferences>', function() {
       it('Reads scoped data via event', () => {
         const e = new CustomEvent('settings-read', {
           detail: {
-            settings: ['c', 'd']
+            settings: ['c', 'd'],
           },
           bubbles: true,
           composed: true,
-          cancelable: true
+          cancelable: true,
         });
         document.body.dispatchEvent(e);
         return e.detail.result.then((data) => {
@@ -159,9 +156,9 @@ describe('<arc-local-store-preferences>', function() {
           detail: {},
           bubbles: true,
           composed: true,
-          cancelable: true
+          cancelable: true,
         });
-        document.body.addEventListener('settings-read', function f(e) {
+        document.body.addEventListener('settings-read', function f() {
           document.body.removeEventListener('settings-read', f);
           e.preventDefault();
         });
@@ -187,7 +184,7 @@ describe('<arc-local-store-preferences>', function() {
       it('Does nothing when storageArea is not "local"', () => {
         const spy = sinon.spy(element, '_informChanged');
         element._winSettingsHandler({
-          storageArea: 'session'
+          storageArea: 'session',
         });
         assert.isFalse(spy.called);
       });
@@ -197,7 +194,7 @@ describe('<arc-local-store-preferences>', function() {
         element._winSettingsHandler({
           storageArea: 'local',
           key: 'test-key',
-          newValue: 'test-value'
+          newValue: 'test-value',
         });
         assert.isTrue(spy.called);
         assert.equal(spy.args[0][0], 'test-key');
@@ -205,51 +202,41 @@ describe('<arc-local-store-preferences>', function() {
       });
     });
 
-    describe('_wrap()', () => {
-      let element;
-      beforeEach(async () => {
-        element = await basicFixture();
-      });
-
+    describe('wrap()', () => {
       it('Returns undefined for undefined argument', () => {
-        const result = element._wrap();
+        const result = wrap();
         assert.isUndefined(result);
       });
 
       it('Returns null for null argument', () => {
-        const result = element._wrap(null);
+        const result = wrap(null);
         assert.equal(result, null);
       });
 
       it('Returns json string', () => {
-        const result = element._wrap({ test: true });
+        const result = wrap({ test: true });
         assert.equal(result, '{"value":{"test":true}}');
       });
     });
 
-    describe('_unwrap()', () => {
-      let element;
-      beforeEach(async () => {
-        element = await basicFixture();
-      });
-
+    describe('unwrap()', () => {
       it('Returns undefined for undefined argument', () => {
-        const result = element._unwrap();
+        const result = unwrap();
         assert.isUndefined(result);
       });
 
       it('Returns null for null argument', () => {
-        const result = element._unwrap(null);
+        const result = unwrap(null);
         assert.equal(result, null);
       });
 
       it('Returns object from "value"', () => {
-        const result = element._unwrap('{"value":{"test":true}}');
+        const result = unwrap('{"value":{"test":true}}');
         assert.deepEqual(result, { test: true });
       });
 
       it('Returns undefined for invalid json', () => {
-        const result = element._unwrap('{"value"');
+        const result = unwrap('{"value"');
         assert.isUndefined(result);
       });
     });
