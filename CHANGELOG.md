@@ -45,3 +45,11 @@
  [7ac32e1](https://github.com/advanced-rest-client/arc-local-store-preferences/commit/7ac32e1c68f9c3078aa23fcc28a9c181fb3bf39a) by Pawel
 
 
+<a name="3.0.0"></a>
+# [3.0.0](https://github.com/advanced-rest-client/arc-local-store-preferences/compare/3.0.0...3.0.0) (2020-05-20)
+
+## Update
+
+* [ci skip] automated merge master->stage. syncing main branches [8819add](https://github.com/advanced-rest-client/arc-local-store-preferences/commit/8819addab72e30258e144eea412ebf70205ded7c) by Ci agent
+
+
