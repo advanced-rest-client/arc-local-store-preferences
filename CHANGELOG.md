@@ -53,3 +53,17 @@
 * [ci skip] automated merge master->stage. syncing main branches [8819add](https://github.com/advanced-rest-client/arc-local-store-preferences/commit/8819addab72e30258e144eea412ebf70205ded7c) by Ci agent
 
 
+<a name="3.1.0"></a>
+## [3.1.0](https://github.com/advanced-rest-client/arc-local-store-preferences/compare/3.0.0...3.1.0) (2020-05-20)
+
+### Update
+
+* [ci skip] automated merge master->stage. syncing main branches [91f5961](https://github.com/advanced-rest-client/arc-local-store-preferences/commit/91f5961ff552d0d8e056f3f42e9fa8a9caaece65) by Ci agent
+* [ci skip] automated merge master->stage. syncing main branches [8819add](https://github.com/advanced-rest-client/arc-local-store-preferences/commit/8819addab72e30258e144eea412ebf70205ded7c) by Ci agent
+
+
+### Refactor
+
+* upgrading to open-wc standards [738f321](https://github.com/advanced-rest-client/arc-local-store-preferences/commit/738f321819cc884a1f45798593ceb8b4a1cd7f05) by Pawel
+
+
